@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AMZ Ops Translate</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="topbar">
+        <div class="brand">
+            <div class="logo">AMZ</div>
+            <div>
+                <h1>Ops Translate</h1>
+                <span>Voice • Text • Translate</span>
+            </div>
+        </div>
+    </header>
+
+
+    <main class="container">
+
+        <section class="hero">
+            <div class="hero-icon">🎙️</div>
+
+            <h2>Translate Voice</h2>
+
+            <p>
+                Upload or record a voice message and translate it easily.
+            </p>
+        </section>
+
+
+        <!-- Voice Input -->
+        <section class="card">
+
+            <div class="section-title">
+                <span>🎧</span>
+                <h3>Voice Message</h3>
+            </div>
+
+            <label class="upload-box" for="audioFile">
+
+                <div class="upload-icon">📁</div>
+
+                <strong>Select Voice File</strong>
+
+                <span>
+                    WhatsApp / Telegram voice or audio
+                </span>
+
+                <input
+                    type="file"
+                    id="audioFile"
+                    accept="audio/*"
+                >
+
+            </label>
+
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
+
+            <button id="recordBtn" class="record-btn">
+                <span>🔴</span>
+                Start Recording
+            </button>
+
+
+            <div id="audioArea" class="audio-area hidden">
+
+                <p id="audioName">Voice selected</p>
+
+                <audio id="audioPlayer" controls></audio>
+
+                <button id="removeAudio" class="remove-btn">
+                    ✕ Remove
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- Language -->
+        <section class="card">
+
+            <div class="section-title">
+                <span>🌐</span>
+                <h3>Translation</h3>
+            </div>
+
+
+            <div class="language-row">
+
+                <div class="language-box">
+
+                    <label>Voice Language</label>
+
+                    <select id="sourceLanguage">
+
+                        <option value="ar">
+                            🇸🇦 Arabic
+                        </option>
+
+                        <option value="en">
+                            🇬🇧 English
+                        </option>
+
+                        <option value="bn">
+                            🇧🇩 Bangla
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="arrow">
+                    →
+                </div>
+
+
+                <div class="language-box">
+
+                    <label>Translate To</label>
+
+                    <select id="targetLanguage">
+
+                        <option value="bn">
+                            🇧🇩 Bangla
+                        </option>
+
+                        <option value="en">
+                            🇬🇧 English
+                        </option>
+
+                        <option value="ar">
+                            🇸🇦 Arabic
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Translate -->
+        <button id="translateBtn" class="translate-btn">
+            ✨ Translate Voice
+        </button>
+
+
+        <!-- Result -->
+        <section id="resultCard" class="card result-card hidden">
+
+            <div class="section-title">
+
+                <span>📝</span>
+
+                <h3>Translation Result</h3>
+
+            </div>
+
+
+            <div class="result-box">
+
+                <p id="resultText">
+                    Your translation will appear here.
+                </p>
+
+            </div>
+
+
+            <div class="result-actions">
+
+                <button id="copyBtn">
+                    📋 Copy
+                </button>
+
+                <button id="shareBtn">
+                    📤 Share
+                </button>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+    <footer>
+        <strong>AMZ Ops Translate</strong>
+        <span>Made for simple voice translation</span>
+    </footer>
+
+
+    <script type="module" src="app.js"></script>
+
+</body>
+</html>
