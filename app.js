@@ -44,9 +44,9 @@ const shareBtn =
     document.getElementById("shareBtn");
 
 
-/* ================================================
-   STATUS
-================================================ */
+// ==================================================
+// STATUS
+// ==================================================
 
 function showStatus(message) {
 
@@ -59,9 +59,47 @@ function showStatus(message) {
 }
 
 
-/* ================================================
-   SELECT AUDIO
-================================================ */
+// ==================================================
+// SELECT AUDIO
+// ==================================================
+
+function setSelectedAudio(file) {
+
+    if (!file)
+        return;
+
+
+    selectedAudio =
+        file;
+
+
+    audioName.textContent =
+        file.name ||
+        "WhatsApp Voice";
+
+
+    audioPlayer.src =
+        URL.createObjectURL(
+            file
+        );
+
+
+    audioArea.classList
+        .remove("hidden");
+
+
+    resultCard.classList
+        .add("hidden");
+
+
+    lastArabicText = "";
+
+}
+
+
+// ==================================================
+// FILE INPUT
+// ==================================================
 
 audioFile.addEventListener(
     "change",
@@ -70,46 +108,34 @@ audioFile.addEventListener(
         const file =
             this.files[0];
 
-        if (!file) return;
+        if (!file)
+            return;
 
 
-        selectedAudio =
-            file;
+        setSelectedAudio(
+            file
+        );
 
-
-        audioName.textContent =
-            file.name;
-
-
-        audioPlayer.src =
-            URL.createObjectURL(
-                file
-            );
-
-
-        audioArea.classList
-            .remove("hidden");
-
-
-        resultCard.classList
-            .add("hidden");
     }
 );
 
 
-/* ================================================
-   REMOVE
-================================================ */
+// ==================================================
+// REMOVE
+// ==================================================
 
 removeAudio.addEventListener(
     "click",
     function () {
 
-        selectedAudio = null;
+        selectedAudio =
+            null;
 
-        audioFile.value = "";
+        audioFile.value =
+            "";
 
-        audioPlayer.src = "";
+        audioPlayer.src =
+            "";
 
         audioArea.classList
             .add("hidden");
@@ -117,14 +143,16 @@ removeAudio.addEventListener(
         resultCard.classList
             .add("hidden");
 
-        lastArabicText = "";
+        lastArabicText =
+            "";
+
     }
 );
 
 
-/* ================================================
-   GEMINI TRANSCRIPTION
-================================================ */
+// ==================================================
+// GEMINI TRANSCRIPTION
+// ==================================================
 
 async function transcribeWithGemini(
     file
@@ -141,7 +169,9 @@ async function transcribeWithGemini(
 
     formData.append(
         "audio",
-        file
+        file,
+        file.name ||
+        "voice.ogg"
     );
 
 
@@ -155,9 +185,13 @@ async function transcribeWithGemini(
             SERVER_URL +
             "/transcribe",
             {
-                method: "POST",
 
-                body: formData
+                method:
+                    "POST",
+
+                body:
+                    formData
+
             }
         );
 
@@ -173,6 +207,7 @@ async function transcribeWithGemini(
             data?.error ||
             "Gemini transcription failed."
         );
+
     }
 
 
@@ -184,16 +219,18 @@ async function transcribeWithGemini(
         throw new Error(
             "No Arabic speech detected."
         );
+
     }
 
 
     return data.text.trim();
+
 }
 
 
-/* ================================================
-   SHOW RESULT
-================================================ */
+// ==================================================
+// SHOW RESULT
+// ==================================================
 
 function showResult(
     text
@@ -267,12 +304,13 @@ function showResult(
     resultText.appendChild(
         paragraph
     );
+
 }
 
 
-/* ================================================
-   CONVERT BUTTON
-================================================ */
+// ==================================================
+// TRANSLATE
+// ==================================================
 
 translateBtn.addEventListener(
     "click",
@@ -285,6 +323,7 @@ translateBtn.addEventListener(
             );
 
             return;
+
         }
 
 
@@ -324,6 +363,7 @@ translateBtn.addEventListener(
                     "Transcription failed."
                 )
             );
+
         }
 
 
@@ -335,14 +375,16 @@ translateBtn.addEventListener(
 
             translateBtn.textContent =
                 "✨ Convert Voice to Text";
+
         }
+
     }
 );
 
 
-/* ================================================
-   COPY
-================================================ */
+// ==================================================
+// COPY
+// ==================================================
 
 copyBtn.addEventListener(
     "click",
@@ -371,13 +413,14 @@ copyBtn.addEventListener(
             },
             1500
         );
+
     }
 );
 
 
-/* ================================================
-   SHARE
-================================================ */
+// ==================================================
+// SHARE TEXT
+// ==================================================
 
 shareBtn.addEventListener(
     "click",
@@ -398,6 +441,7 @@ shareBtn.addEventListener(
 
                 text:
                     lastArabicText
+
             });
 
         }
@@ -413,6 +457,130 @@ shareBtn.addEventListener(
             alert(
                 "Arabic text copied."
             );
+
         }
+
     }
+);
+
+
+// ==================================================
+// ANDROID SHARE AUDIO
+// ==================================================
+
+window.receiveSharedAudio =
+    async function (
+        base64,
+        mimeType
+    ) {
+
+        try {
+
+            console.log(
+                "Android shared audio received."
+            );
+
+
+            // ------------------------------------------
+            // Base64 → Binary
+            // ------------------------------------------
+
+            const binary =
+                atob(base64);
+
+
+            const bytes =
+                new Uint8Array(
+                    binary.length
+                );
+
+
+            for (
+                let i = 0;
+                i < binary.length;
+                i++
+            ) {
+
+                bytes[i] =
+                    binary.charCodeAt(i);
+
+            }
+
+
+            // ------------------------------------------
+            // Create Blob
+            // ------------------------------------------
+
+            const blob =
+                new Blob(
+                    [bytes],
+                    {
+                        type:
+                            mimeType ||
+                            "audio/ogg"
+                    }
+                );
+
+
+            // ------------------------------------------
+            // Create File
+            // ------------------------------------------
+
+            const extension =
+                mimeType ===
+                "audio/mpeg"
+                    ? ".mp3"
+                    : ".ogg";
+
+
+            const file =
+                new File(
+                    [blob],
+                    "WhatsApp-Voice" +
+                    extension,
+                    {
+                        type:
+                            mimeType ||
+                            "audio/ogg"
+                    }
+                );
+
+
+            // ------------------------------------------
+            // Put into existing system
+            // ------------------------------------------
+
+            setSelectedAudio(
+                file
+            );
+
+
+            // ------------------------------------------
+            // Automatically start transcription
+            // ------------------------------------------
+
+            translateBtn.click();
+
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Shared audio error:",
+                error
+            );
+
+
+            showStatus(
+                "❌ Could not load shared audio."
+            );
+
+        }
+
+    };
+
+
+console.log(
+    "AMZ Ops Translate loaded."
 );
