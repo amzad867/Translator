@@ -1,0 +1,13 @@
+{
+  "name": "amz-ops-translate-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "cors": "^2.8.5"
+  }
+}
