@@ -7,35 +7,41 @@ const app = express();
 
 const PORT = process.env.PORT || 10000;
 
-const API_KEY =
+const GEMINI_API_KEY =
     process.env.GEMINI_API_KEY;
 
 
-/* ============================================
-   CORS
-============================================ */
+// ============================================
+// CORS
+// ============================================
 
 app.use(cors());
 
 
-/* ============================================
-   HEALTH CHECK
-============================================ */
+// ============================================
+// HEALTH CHECK
+// ============================================
 
 app.get("/", (req, res) => {
 
     res.json({
+
         status: "ok",
-        service: "AMZ Ops Translate",
-        model: "gemini-3.5-transcribe"
+
+        service:
+            "AMZ Ops Translate",
+
+        model:
+            "gemini-3.5-transcribe"
+
     });
 
 });
 
 
-/* ============================================
-   MULTER
-============================================ */
+// ============================================
+// MULTER
+// ============================================
 
 const upload =
     multer({
@@ -53,35 +59,38 @@ const upload =
     });
 
 
-/* ============================================
-   GEMINI CLIENT
-============================================ */
+// ============================================
+// GEMINI
+// ============================================
 
 const ai =
-    API_KEY
-        ? new GoogleGenAI({
-            apiKey: API_KEY
-        })
-        : null;
+    new GoogleGenAI({
+
+        apiKey:
+            GEMINI_API_KEY
+
+    });
 
 
-/* ============================================
-   TRANSCRIBE
-============================================ */
+// ============================================
+// TRANSCRIBE
+// ============================================
 
 app.post(
+
     "/transcribe",
+
     upload.single("audio"),
 
     async (req, res) => {
 
         try {
 
-            /* -------------------------------
-               API KEY
-            -------------------------------- */
+            // --------------------------------
+            // CHECK API KEY
+            // --------------------------------
 
-            if (!API_KEY) {
+            if (!GEMINI_API_KEY) {
 
                 return res.status(500).json({
 
@@ -93,9 +102,9 @@ app.post(
             }
 
 
-            /* -------------------------------
-               AUDIO
-            -------------------------------- */
+            // --------------------------------
+            // CHECK AUDIO
+            // --------------------------------
 
             if (!req.file) {
 
@@ -110,7 +119,15 @@ app.post(
 
 
             console.log(
-                "Received:",
+                "================================"
+            );
+
+            console.log(
+                "NEW TRANSCRIPTION REQUEST"
+            );
+
+            console.log(
+                "File:",
                 req.file.originalname
             );
 
@@ -125,31 +142,112 @@ app.post(
             );
 
 
-            /* =================================
-               STEP 1
-               UPLOAD USING GOOGLE SDK
-            ================================= */
+            // ========================================
+            // DETERMINE MIME TYPE
+            // ========================================
+
+            let mimeType =
+                req.file.mimetype;
+
+
+            if (
+                !mimeType ||
+                mimeType ===
+                    "application/octet-stream" ||
+                mimeType ===
+                    "application/upload"
+            ) {
+
+                const filename =
+                    (
+                        req.file.originalname ||
+                        ""
+                    ).toLowerCase();
+
+
+                if (
+                    filename.endsWith(".ogg") ||
+                    filename.endsWith(".opus")
+                ) {
+
+                    mimeType =
+                        "audio/ogg";
+
+                } else if (
+                    filename.endsWith(".mp3")
+                ) {
+
+                    mimeType =
+                        "audio/mpeg";
+
+                } else if (
+                    filename.endsWith(".wav")
+                ) {
+
+                    mimeType =
+                        "audio/wav";
+
+                } else if (
+                    filename.endsWith(".m4a") ||
+                    filename.endsWith(".mp4")
+                ) {
+
+                    mimeType =
+                        "audio/mp4";
+
+                } else if (
+                    filename.endsWith(".webm")
+                ) {
+
+                    mimeType =
+                        "audio/webm";
+
+                } else {
+
+                    mimeType =
+                        "audio/ogg";
+
+                }
+
+            }
+
+
+            console.log(
+                "Using MIME:",
+                mimeType
+            );
+
+
+            // ========================================
+            // UPLOAD AUDIO TO GEMINI
+            // ========================================
+
+            console.log(
+                "Uploading audio to Gemini..."
+            );
+
 
             const audioFile =
                 await ai.files.upload({
 
                     file:
                         new Blob(
+
                             [
                                 req.file.buffer
                             ],
+
                             {
                                 type:
-                                    req.file.mimetype ||
-                                    "audio/ogg"
+                                    mimeType
                             }
+
                         ),
 
                     config: {
 
                         mimeType:
-                            req.file.mimetype ||
-                            "audio/ogg"
+                            mimeType
 
                     }
 
@@ -157,27 +255,40 @@ app.post(
 
 
             console.log(
-                "Uploaded Gemini file:",
-                audioFile.uri
+                "Gemini file uploaded:"
+            );
+
+            console.log(
+                audioFile
             );
 
 
-            if (!audioFile.uri) {
+            if (
+                !audioFile ||
+                !audioFile.uri
+            ) {
 
                 return res.status(500).json({
 
                     error:
-                        "Gemini upload did not return a file URI."
+                        "Gemini upload did not return a file URI.",
+
+                    raw:
+                        audioFile
 
                 });
 
             }
 
 
-            /* =================================
-               STEP 2
-               TRANSCRIBE
-            ================================= */
+            // ========================================
+            // TRANSCRIBE WITH GEMINI
+            // ========================================
+
+            console.log(
+                "Starting Gemini transcription..."
+            );
+
 
             const interaction =
                 await ai.interactions.create({
@@ -196,7 +307,8 @@ app.post(
                                 audioFile.uri,
 
                             mime_type:
-                                audioFile.mimeType
+                                audioFile.mimeType ||
+                                mimeType
 
                         }
 
@@ -207,7 +319,9 @@ app.post(
                         transcription_config: {
 
                             language_codes: [
+
                                 "ar-SA"
+
                             ],
 
                             mode: {
@@ -224,27 +338,106 @@ app.post(
                 });
 
 
+            // ========================================
+            // LOG COMPLETE RESPONSE
+            // ========================================
+
             console.log(
-                "Interaction received."
+                "Gemini interaction completed."
+            );
+
+            console.log(
+                JSON.stringify(
+                    interaction,
+                    null,
+                    2
+                )
             );
 
 
+            // ========================================
+            // EXTRACT TEXT
+            // ========================================
+
+            let text =
+                interaction?.output_text ||
+                "";
+
+
+            /*
+             * Gemini Transcribe response can
+             * contain the transcript here:
+             *
+             * steps[]
+             *   content[]
+             *      text
+             */
+
+            if (
+                !text.trim() &&
+                Array.isArray(
+                    interaction?.steps
+                )
+            ) {
+
+                for (
+                    const step
+                    of interaction.steps
+                ) {
+
+                    if (
+                        !Array.isArray(
+                            step?.content
+                        )
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    for (
+                        const item
+                        of step.content
+                    ) {
+
+                        if (
+                            item?.type ===
+                                "text" &&
+
+                            typeof item?.text ===
+                                "string"
+                        ) {
+
+                            text +=
+                                item.text +
+                                "\n";
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+
+            text =
+                text.trim();
+
+
             console.log(
-                "Output:",
-                interaction.output_text
+                "FINAL TEXT:"
+            );
+
+            console.log(
+                text
             );
 
 
-            /* =================================
-               RESULT
-            ================================= */
-
-            const text =
-                (
-                    interaction.output_text ||
-                    ""
-                ).trim();
-
+            // ========================================
+            // EMPTY RESULT
+            // ========================================
 
             if (!text) {
 
@@ -261,9 +454,9 @@ app.post(
             }
 
 
-            /* =================================
-               SUCCESS
-            ================================= */
+            // ========================================
+            // SUCCESS
+            // ========================================
 
             return res.json({
 
@@ -275,14 +468,25 @@ app.post(
 
             });
 
-
         }
+
 
         catch (error) {
 
             console.error(
-                "TRANSCRIPTION ERROR:",
+                "================================"
+            );
+
+            console.error(
+                "GEMINI ERROR"
+            );
+
+            console.error(
                 error
+            );
+
+            console.error(
+                "================================"
             );
 
 
@@ -292,19 +496,21 @@ app.post(
                     "Gemini transcription failed.",
 
                 details:
-                    error.message
+                    error?.message ||
+                    String(error)
 
             });
 
         }
 
     }
+
 );
 
 
-/* ============================================
-   START
-============================================ */
+// ============================================
+// START SERVER
+// ============================================
 
 app.listen(
 
@@ -315,7 +521,23 @@ app.listen(
     () => {
 
         console.log(
-            `AMZ Ops Translate running on port ${PORT}`
+            "================================"
+        );
+
+        console.log(
+            "AMZ OPS TRANSLATE SERVER"
+        );
+
+        console.log(
+            `Running on port ${PORT}`
+        );
+
+        console.log(
+            "Model: gemini-3.5-transcribe"
+        );
+
+        console.log(
+            "================================"
         );
 
     }
